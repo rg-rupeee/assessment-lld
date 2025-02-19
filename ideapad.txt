@@ -1,0 +1,115 @@
+Design a Test Drive Booking System for a car-selling company that operates multiple hubs across multiple cities. The system should allow users to book test drives for specific cars available at a hub within predefined, configurable 1-hour slots. If a slot is booked for a particular car, it should be blocked to prevent overbooking.
+Requirements
+
+Functional Requirements
+Users can view available test drive slots for a specific car at a hub.
+Users can book a test drive for a car at a selected time slot.
+If a slot is booked for a car, it should not be available for others.
+Admins should be able to configure available time slots per hub.
+Users should receive confirmation upon successful booking.
+Users should be able to cancel a booking (optional).
+
+Non-Functional Requirements
+The system should be scalable to handle multiple cities and hubs.
+Performance should be optimized to handle high user traffic.
+Data consistency should be maintained (avoid double booking).
+The system should support API-based integration for mobile/web apps.
+
+
+1. No overlapping slots
+2. ServingCity, Hubs, Slots, Users -> Admin ; Customer, Cars
+3. TestDriveBooking
+
+ServingCity{
+  uniqueId
+  name
+  state
+  country
+
+  created_at
+  updated_at
+}
+
+Hub{
+  uniqueId
+  city -> ServingCity
+  address{
+    street
+    area
+    pinCode
+    coordinates: {
+      latitude
+      longitude
+    }
+    city
+    state
+    directions
+  }
+
+  created_at
+  updated_at
+}
+
+TestDriveCar{
+  uniqueId
+  hub -> Hub
+  details{
+    sku
+    name
+    model
+    year
+    price
+  }
+  Status: enum{"AVAILABLE", "IN_MAINTAINANCE"}
+
+  created_at
+  updated_at
+}
+
+Slot{
+  hub -> Hub
+  car -> Car
+  startTime
+  endTime
+
+  status: enum{"AVAILABLE", "BOOKED", "BLOCKED"}
+
+  created_at
+  updated_at
+} (hub, car, startTime -> unique combination)
+
+User{
+  uniqueId 
+  roles: enum{["ADMIN", "CUSTOMER"]}
+  mobileNumber
+  email
+  password /* Hashed Password of the user */
+
+  created_at
+  updated_at
+}
+
+TestDriveBooking{
+  uniqueId
+  user -> User
+  slot -> Slot
+  bookingTime
+  status: enum{"PENDING", "COFIRMED", "CANCELLED"}
+
+  created_at
+  updated_at
+}
+
+Query: userId -> find all confirmed booking
+
+SELECT * FROM TestDriveBooking AS tdb
+JOIN SLOT AS s
+ON s.uniqueId = tdb.slot
+JOIN HUB AS h
+ON h.uniqueId = s.hub
+JOIN Car as c
+ON c.uniqueId = s.car
+WHERE tdb.userId = {{userId}} AND tdb.status = "CONFIRMED"
+LIMIT 10 
+OFFSET 1
+ORDER BY DSC slot.startTime
